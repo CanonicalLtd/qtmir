@@ -80,7 +80,7 @@ TEST_F(ApplicationManagerTests,bug_case_1240400_second_dialer_app_fails_to_autho
     const pid_t firstProcId = 5921;
     const pid_t secondProcId = 5922;
     const char dialer_app_id[] = "dialer-app";
-    QByteArray cmdLine( "/usr/bin/dialer-app --desktop_file_hint=dialer-app");
+    QByteArray cmdLine( "/usr/bin/dialer-app");
     QByteArray secondcmdLine( "/usr/bin/dialer-app");
 
     FakeMirSurface surface;
@@ -122,7 +122,7 @@ TEST_F(ApplicationManagerTests,application_dies_while_starting)
     using namespace ::testing;
     const pid_t procId = 5921;
     const char app_id[] = "my-app";
-    QByteArray cmdLine( "/usr/bin/my-app --desktop_file_hint=my-app");
+    QByteArray cmdLine( "/usr/bin/my-app");
 
     EXPECT_CALL(procInfo,command_line(procId))
         .Times(1)
@@ -177,46 +177,6 @@ TEST_F(ApplicationManagerTests,startApplicationSupportsLongAppId)
     EXPECT_EQ(shortAppId, application->appId());
 }
 
-TEST_F(ApplicationManagerTests,testAppIdGuessFromDesktopFileName)
-{
-    using namespace ::testing;
-    const pid_t procId = 5921;
-    QString appId("sudoku-app");
-    QString cmdLine = QString("/usr/bin/my-app --desktop_file_hint=/usr/share/click/preinstalled/com.ubuntu.sudoku/1.0.180/%1.desktop").arg(appId);
-
-    EXPECT_CALL(procInfo,command_line(procId))
-        .Times(1)
-        .WillOnce(Return(qPrintable(cmdLine)));
-
-    bool authed = true;
-    applicationManager.authorizeSession(procId, authed);
-    Application *app = applicationManager.findApplication(appId);
-
-    EXPECT_EQ(true, authed);
-    EXPECT_NE(app, nullptr);
-    EXPECT_EQ(appId, app->appId());
-}
-
-TEST_F(ApplicationManagerTests,testAppIdGuessFromDesktopFileNameWithLongAppId)
-{
-    using namespace ::testing;
-    const pid_t procId = 5921;
-    QString shortAppId("com.ubuntu.desktop_desktop");
-    QString cmdLine = QString("/usr/bin/my-app --desktop_file_hint=/usr/share/applications/%1_1.0.180.desktop").arg(shortAppId);
-
-    EXPECT_CALL(procInfo,command_line(procId))
-        .Times(1)
-        .WillOnce(Return(qPrintable(cmdLine)));
-
-    bool authed = true;
-    applicationManager.authorizeSession(procId, authed);
-    Application *app = applicationManager.findApplication(shortAppId);
-
-    EXPECT_EQ(true, authed);
-    EXPECT_NE(app, nullptr);
-    EXPECT_EQ(shortAppId, app->appId());
-}
-
 TEST_F(ApplicationManagerTests,bug_case_1281075_session_ptrs_always_distributed_to_last_started_app)
 {
     using namespace ::testing;
@@ -225,11 +185,11 @@ TEST_F(ApplicationManagerTests,bug_case_1281075_session_ptrs_always_distributed_
     const pid_t third_procId = 5923;
     std::shared_ptr<mir::scene::Surface> aSurface(nullptr);
     const char first_app_id[] = "app1";
-    QByteArray first_cmdLine( "/usr/bin/app1 --desktop_file_hint=app1");
+    QByteArray first_cmdLine( "/usr/bin/app1");
     const char second_app_id[] = "app2";
-    QByteArray second_cmdLine( "/usr/bin/app2--desktop_file_hint=app2");
+    QByteArray second_cmdLine( "/usr/bin/app2");
     const char third_app_id[] = "app3";
-    QByteArray third_cmdLine( "/usr/bin/app3 --desktop_file_hint=app3");
+    QByteArray third_cmdLine( "/usr/bin/app3");
 
     ON_CALL(*taskController,appIdHasProcessId(QString(first_app_id), first_procId)).WillByDefault(Return(true));
     ON_CALL(*taskController,appIdHasProcessId(QString(first_app_id), second_procId)).WillByDefault(Return(false));
@@ -286,7 +246,7 @@ TEST_F(ApplicationManagerTests,two_sessions_on_one_application)
     using namespace ::testing;
     const pid_t a_procId = 5921;
     const char an_app_id[] = "some_app";
-    QByteArray a_cmd( "/usr/bin/app1 --desktop_file_hint=some_app");
+    QByteArray a_cmd( "/usr/bin/app1");
 
     ON_CALL(procInfo,command_line(_)).WillByDefault(Return(a_cmd));
 
@@ -322,7 +282,7 @@ TEST_F(ApplicationManagerTests,two_sessions_on_one_application_after_starting)
     using namespace ::testing;
     const pid_t a_procId = 5921;
     const char an_app_id[] = "some_app";
-    QByteArray a_cmd( "/usr/bin/app1 --desktop_file_hint=some_app");
+    QByteArray a_cmd( "/usr/bin/app1");
     FakeMirSurface aSurface;
 
     ON_CALL(procInfo,command_line(_)).WillByDefault(Return(a_cmd));
@@ -362,7 +322,7 @@ TEST_F(ApplicationManagerTests,starting_app_is_suspended_when_it_gets_ready_if_r
     using namespace ::testing;
     const pid_t procId = 5921;
     FakeMirSurface aSurface;
-    QByteArray cmdLine( "/usr/bin/app --desktop_file_hint=app");
+    QByteArray cmdLine( "/usr/bin/app");
 
     EXPECT_CALL(procInfo,command_line(procId))
         .Times(1)
@@ -398,9 +358,9 @@ TEST_F(ApplicationManagerTests,requestFocusApplication)
     const pid_t second_procId = 5922;
     const pid_t third_procId = 5923;
     std::shared_ptr<mir::scene::Surface> aSurface(nullptr);
-    QByteArray first_cmdLine( "/usr/bin/app1 --desktop_file_hint=app1");
-    QByteArray second_cmdLine( "/usr/bin/app2--desktop_file_hint=app2");
-    QByteArray third_cmdLine( "/usr/bin/app3 --desktop_file_hint=app3");
+    QByteArray first_cmdLine( "/usr/bin/app1");
+    QByteArray second_cmdLine( "/usr/bin/app2");
+    QByteArray third_cmdLine( "/usr/bin/app3");
 
     EXPECT_CALL(procInfo,command_line(first_procId))
         .Times(1)
@@ -520,83 +480,6 @@ TEST_F(ApplicationManagerTests,appStartedByUpstart)
     EXPECT_EQ(1, applicationManager.count());
     EXPECT_EQ(1, focusSpy.count());
     EXPECT_EQ(appId, focusSpy.takeFirst().at(0).toString());
-}
-
-/*
- * Test that an application launched via the command line with a correct --desktop_file_hint is accepted,
- * creates the correct Application instance and emits signals indicating the model updated
- */
-TEST_F(ApplicationManagerTests,appStartedUsingCorrectDesktopFileHintSwitch)
-{
-    using namespace ::testing;
-    const QString appId("testAppId");
-    const QString name("Test App");
-    const pid_t procId = 5551;
-    QByteArray cmdLine("/usr/bin/testApp --desktop_file_hint=");
-    cmdLine = cmdLine.append(appId);
-
-    // Set up Mocks & signal watcher
-    EXPECT_CALL(procInfo,command_line(procId))
-        .Times(1)
-        .WillOnce(Return(cmdLine));
-
-    auto mockApplicationInfo = QSharedPointer<MockApplicationInfo>(new NiceMock<MockApplicationInfo>(appId));
-    ON_CALL(*mockApplicationInfo, name()).WillByDefault(Return(name));
-
-    EXPECT_CALL(*taskController, getInfoForApp(appId))
-        .Times(1)
-        .WillOnce(Return(mockApplicationInfo));
-
-    QSignalSpy countSpy(&applicationManager, SIGNAL(countChanged()));
-
-    // Mir requests authentication for an application that was started
-    bool authed = false;
-    applicationManager.authorizeSession(procId, authed);
-    EXPECT_EQ(authed, true);
-
-    Application *theApp = applicationManager.findApplication(appId);
-
-    // check application data
-    EXPECT_EQ(theApp->state(), Application::Starting);
-    EXPECT_EQ(theApp->appId(), appId);
-    EXPECT_EQ(theApp->name(), name);
-    EXPECT_EQ(theApp->processState(), Application::ProcessUnknown);
-
-    // check signals were emitted
-    EXPECT_EQ(countSpy.count(), 2); //FIXME(greyback)
-    EXPECT_EQ(applicationManager.count(), 1);
-}
-
-/*
- * Test that an application launched via the command line without the correct --desktop_file_hint is rejected
- */
-TEST_F(ApplicationManagerTests,appDoesNotStartWhenUsingBadDesktopFileHintSwitch)
-{
-    using namespace ::testing;
-    const QString appId("testAppId");
-    const QString name("Test App");
-    const pid_t procId = 5551;
-    QByteArray cmdLine("/usr/bin/testApp");
-
-    // Set up Mocks & signal watcher
-    EXPECT_CALL(procInfo,command_line(procId))
-        .Times(1)
-        .WillOnce(Return(cmdLine));
-
-    QSignalSpy countSpy(&applicationManager, SIGNAL(countChanged()));
-
-    // Mir requests authentication for an application that was started
-    bool authed = true;
-    applicationManager.authorizeSession(procId, authed);
-    EXPECT_EQ(authed, false);
-
-    Application *theApp = applicationManager.findApplication(appId);
-
-    EXPECT_EQ(theApp, nullptr);
-
-    // check no new signals were emitted
-    EXPECT_EQ(countSpy.count(), 0);
-    EXPECT_EQ(applicationManager.count(), 0);
 }
 
 /*
@@ -1148,15 +1031,15 @@ TEST_F(ApplicationManagerTests,mirNotifiesOfStoppingForegroundApp)
 }
 
 /*
- * Test that if an application (one launched via desktop_file_hint) is reported to be stopping by
+ * Test that if an application is reported to be stopping by
  * Mir, AppMan removes it from the model immediately
  */
-TEST_F(ApplicationManagerTests,mirNotifiesOfStoppingAppLaunchedWithDesktopFileHint)
+TEST_F(ApplicationManagerTests,mirNotifiesOfStoppingAppLaunched)
 {
     using namespace ::testing;
     const QString appId("testAppId");
     const pid_t procId = 5551;
-    QByteArray cmdLine("/usr/bin/testApp --desktop_file_hint=");
+    QByteArray cmdLine("/usr/bin/testApp");
     cmdLine = cmdLine.append(appId);
 
     ON_CALL(*taskController,appIdHasProcessId(appId, procId)).WillByDefault(Return(true));
