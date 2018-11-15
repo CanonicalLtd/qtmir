@@ -536,12 +536,6 @@ void ApplicationManager::authorizeSession(const pid_t pid, bool &authorized)
         }
     }
 
-    /*
-     * Hack: Allow applications to be launched without being managed by upstart, where AppManager
-     * itself manages processes executed with a "--desktop_file_hint=/path/to/desktopFile.desktop"
-     * parameter attached, or an environment variable "DESKTOP_FILE_HINT=/path/to/desktopFile.desktop".
-     * This exists until all GUI applications are launched via ubuntu-app-launch.
-     */
     std::unique_ptr<ProcInfo::CommandLine> info = m_procInfo->commandLine(pid);
     if (!info) {
         qWarning() << "ApplicationManager REJECTED connection from app with pid" << pid
@@ -556,27 +550,17 @@ void ApplicationManager::authorizeSession(const pid_t pid, bool &authorized)
         return;
     }
 
-    QString desktopFileName = info->getParameter("--desktop_file_hint=");
-
-    if (desktopFileName.isNull()) {
-        auto environment = m_procInfo->environment(pid);
-        if (!environment->contains("DESKTOP_FILE_HINT")) {
-            qCritical() << "ApplicationManager REJECTED connection from app with pid" << pid
-                        << "as it was not launched by upstart, and no desktop_file_hint is specified";
-            return;
-        }
-        desktopFileName = environment->getParameter("DESKTOP_FILE_HINT");
+    auto environment = m_procInfo->environment(pid);
+    if (!environment->contains("APP_ID")) {
+        authorized = true;
+        return;
     }
 
-    // Guess appId from the desktop file hint
-    const QString appId = toShortAppIdIfPossible(desktopFileName.split('/').last().remove(QRegExp(QStringLiteral(".desktop$"))));
-
-    qCDebug(QTMIR_APPLICATIONS) << "Process supplied desktop_file_hint, loading:" << appId;
-
+    auto appId = environment->getParameter("APP_ID");
     auto appInfo = m_taskController->getInfoForApp(appId);
     if (!appInfo) {
         qCritical() << "ApplicationManager REJECTED connection from app with pid" << pid
-                    << "as the app specified by the desktop_file_hint argument could not be found";
+                    << "as the app specified by the APP_ID environment could not be found";
         return;
     }
 
@@ -592,7 +576,6 @@ void ApplicationManager::authorizeSession(const pid_t pid, bool &authorized)
     }
 
     const QStringList arguments(info->asStringList());
-    queuedAddApp(appInfo, arguments, pid);
     authorized = true;
     m_authorizedPids.insertMulti(pid, appInfo->appId());
 }
