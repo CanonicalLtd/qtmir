@@ -552,6 +552,7 @@ void ApplicationManager::authorizeSession(const pid_t pid, bool &authorized)
 
     auto environment = m_procInfo->environment(pid);
     if (!environment->contains("APP_ID")) {
+        m_authorizedPids.insertMulti(pid, info->asStringList().at(0));
         authorized = true;
         return;
     }
